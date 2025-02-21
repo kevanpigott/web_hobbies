@@ -4,10 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
+    <script>
+        function addHobby(event) {
+            event.preventDefault();
+            const hobbyInput = document.getElementById('hobby');
+            const hobbyName = hobbyInput.value;
+
+            fetch('/add_hobby', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ hobby: hobbyName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const hobbyList = document.getElementById('hobby-list');
+                    const newHobby = document.createElement('li');
+                    newHobby.textContent = hobbyName + ' ';
+                    const removeLink = document.createElement('a');
+                    removeLink.href = `/remove_hobby/${data.hobby_id}`;
+                    removeLink.textContent = 'Remove';
+                    newHobby.appendChild(removeLink);
+                    hobbyList.appendChild(newHobby);
+                    hobbyInput.value = '';
+                } else {
+                    alert('Failed to add hobby');
+                }
+            });
+        }
+    </script>
 </head>
 <body>
-    <h2>Welcome, {{ user }}!</h2>
+    <h2>Welcome, {{ user.username }}!</h2>
     <p>You are now logged in.</p>
+    <h3>Your Hobbies:</h3>
+    <ul id="hobby-list">
+        {% for hobby in hobbies %}
+        <li>{{ hobby.name }} <a href="/remove_hobby/{{ hobby.id }}">Remove</a></li>
+        {% endfor %}
+    </ul>
+    <form onsubmit="addHobby(event)">
+        <label for="hobby">Add a new hobby:</label>
+        <input type="text" id="hobby" name="hobby" required>
+        <button type="submit">Add Hobby</button>
+    </form>
     <a href="/logout">Logout</a>
 </body>
 </html>
