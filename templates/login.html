@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <script>
-        function showError(message) {
+        function showMessage(message) {
             alert(message);
         }
     </script>
@@ -19,9 +19,9 @@
         <input type="password" id="password" name="password" required><br><br>
         <button type="submit">Login</button>
     </form>
-    {% if error %}
+    {% if message %}
     <script>
-        showError("{{ error }}");
+        showMessage("{{ message }}");
     </script>
     {% endif %}
 </body>

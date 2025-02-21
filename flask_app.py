@@ -32,7 +32,7 @@ def login():
             session['user'] = username
             return redirect(url_for('home'))
         else:
-            return render_template("login.html", error="Invalid credentials! Try again.")
+            return render_template("login.html", message="Invalid credentials! Try again.")
     return render_template("login.html")
 
 @app.route('/logout')
@@ -48,7 +48,7 @@ def register():
         
         user = get_user(username)
         if user:
-            return "Username already exists! Try again."
+            return render_template("register.html", message="Username already exists! Try again.")
         else:
             if add_user(username, password): # redundancy check
                 session['user'] = username

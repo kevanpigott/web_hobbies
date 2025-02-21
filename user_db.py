@@ -17,7 +17,8 @@ def add_user(username, password) -> bool:
     if get_user(username):
         return True
     
-    hashed_password = password #generate_password_hash(password, method='pbkdf2:sha256') # TODO
+    # hashed_password = password
+    hashed_password = generate_password_hash(password, method='pbkdf2:sha256') # TODO
     new_user = User(username=username, password=hashed_password)
     db.session.add(new_user)
     db.session.commit()
@@ -27,5 +28,5 @@ def get_user(username):
     return User.query.filter_by(username=username).first()
 
 def check_user_password(user, password) -> bool:
-    return password == user.password
-    # return check_password_hash(user.password, password) # TODO
+    # return password == user.password
+    return check_password_hash(user.password, password) # TODO

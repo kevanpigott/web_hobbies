@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
+    <script>
+        function showMessage(message) {
+            alert(message);
+        }
+    </script>
 </head>
 <body>
     <h2>Create an Account</h2>
@@ -15,5 +20,10 @@
         <button type="submit">Register</button>
     </form>
     <p>Already have an account? <a href="/login">Login here</a></p>
+    {% if message %}
+    <script>
+        showMessage("{{ message }}");
+    </script>
+    {% endif %}
 </body>
 </html>
