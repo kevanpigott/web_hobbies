@@ -27,5 +27,5 @@ def get_user(username):
     return User.query.filter_by(username=username).first()
 
 def check_user_password(user, password) -> bool:
-    return password == password
+    return password == user.password
     # return check_password_hash(user.password, password) # TODO

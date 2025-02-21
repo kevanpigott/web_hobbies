@@ -32,7 +32,7 @@ def login():
             session['user'] = username
             return redirect(url_for('home'))
         else:
-            return "Invalid credentials! Try again."
+            return render_template("login.html", error="Invalid credentials! Try again.")
     return render_template("login.html")
 
 @app.route('/logout')
