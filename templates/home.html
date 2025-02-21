@@ -30,7 +30,7 @@
                     hobbyList.appendChild(newHobby);
                     hobbyInput.value = '';
                 } else {
-                    alert('Failed to add hobby');
+                    alert(data.message || 'Failed to add hobby');
                 }
             });
         }

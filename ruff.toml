@@ -1,0 +1,54 @@
+line-length = 105
+
+[format]
+preview = true
+
+[lint]
+select = [
+    # pyflakses
+    "F",
+    # pycodestyle
+    "E", "W",
+    # isort
+    "I",
+    # Ruff-specific
+    "RUF",
+    # pep8-naming
+    "UP",
+    # flake8-2020
+    "YTT",
+    # flake8-bugbear
+    "B",
+    # flake8-comprehensions
+    "C4",
+    # flake8-executable
+    "EXE",
+    # flake8-omplicit-str-concat
+    "ISC",
+    # flake8-pie
+    "PIE",
+    # flake8-pyi
+    "PYI",
+    #flake8-raise
+    "RSE",
+    #flake8-return
+    "RET",
+    #flake8-simplify
+    "SIM",
+    #flake8-type-checking
+    "TCH",
+    # mccabe
+    "C90",
+    # eradicare 
+    "ERA",
+    # flynt
+    "FLY",
+    # pylint
+    "PLC", "PLE", "PIE",
+    # tidy ignore_missing_imports
+    "TID",
+]
+ignore = ["ISC001"]
+
+[lint.mccabe]
+max-complexity = 10

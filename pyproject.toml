@@ -9,10 +9,76 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "flask (>=3.1.0,<4.0.0)",
-    "flask-sqlalchemy (>=3.1.1,<4.0.0)"
+    "flask-sqlalchemy (>=3.1.1,<4.0.0)",
+    "pandas (>=2.2.3,<3.0.0)",
+    "openpyxl (>=3.1.5,<4.0.0)"
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+# settings for dependencies
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+ignore_missing_imports = true
+
+# poetry command wrappers with poe
+[tool.poe.tasks.install]
+help = "Run default poetry install"
+sequence = [
+    { cmd = "poetry install" },
+    { cmd = "pre-commit install" },
+]
+
+[tool.poe.tasks.format]
+help = "Auto-format Python with Ruff."
+sequence = [
+    { cmd = "ruff format ." },
+    { cmd = "ruff check . --fix" },
+]
+
+[tool.poe.tasks.lint]
+help = "Lint the code with Ruff, mypy, and Poetry check."
+sequence = [
+    { cmd = "pre-commit run end-of-file-fixer --all-files" },
+    { cmd = "ruff format --check ." },
+    { cmd = "ruff check ." },
+    { cmd = "mypy ." },
+    { cmd = "poetry check -v" },
+    { cmd = "poetry check --lock" }
+]
+
+[tool.poe.tasks.clean]
+help = "clean pycs and pycache files"
+shell = """
+    pyclean .
+    if [ -d .ruff_cache/ ]; then rm -rf .ruff_cache/; fi
+    if [ -d .pytest_cache/ ]; then rm -rf .pytest_cache/; fi
+    if [ -d .mypy_cache/ ]; then rm -rf .mypy_cache/; fi
+"""
+
+[tool.poe.tasks.purge]
+help = "purge all generated files, including the virtualenv"
+shell = """
+    poe clean
+    poetry cache clear . --all
+    if [ -f poetry.lock ]; then rm poetry.lock; fi
+    if [ -d .venv/ ]; then rm -rf .venv/; fi
+"""
+
+[tool.poetry.group.dev.dependencies]
+poethepoet = "^0.32.2"
+ruff = "^0.9.7"
+mypy = "^1.15.0"
+pyclean = "^3.1.0"
+pre-commit = "^4.1.0"
+isort = "^6.0.0"
+
+[tool.poe.tasks]
+delete-db = { cmd = "python poe_commands.py --delete-db instance" }
+run-flask = { cmd = "flask run", env = { FLASK_APP = "flask_app.py" } }
+export-db = { cmd = "python poe_commands.py --export-db instance output.xlsx" }
