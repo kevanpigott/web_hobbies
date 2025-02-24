@@ -82,3 +82,4 @@ isort = "^6.0.0"
 delete-db = { cmd = "python poe_commands.py --delete-db instance" }
 run-flask = { cmd = "flask run", env = { FLASK_APP = "flask_app.py" } }
 export-db = { cmd = "python poe_commands.py --export-db instance output.xlsx" }
+import-db = { cmd = "python poe_commands.py --import-db instance output.xlsx" }
