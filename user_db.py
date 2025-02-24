@@ -27,6 +27,12 @@ class UserHobby(db.Model):
     hobby_id = db.Column(db.Integer, db.ForeignKey("hobby.id"), primary_key=True)
 
 
+class HobbyRelation(db.Model):
+    hobby_id1 = db.Column(db.Integer, db.ForeignKey("hobby.id"), primary_key=True)
+    hobby_id2 = db.Column(db.Integer, db.ForeignKey("hobby.id"), primary_key=True)
+    similarity = db.Column(db.Float, nullable=False)
+
+
 class DbManager:
     FILE_NAME = "tables.db"
 
@@ -53,6 +59,19 @@ class DbManager:
         """given a user object and a password, check if password is correct"""
         return check_password_hash(user.password, password)
 
+    def calculate_all_relations_for_hobby(hobby: Hobby) -> None:
+        # TODO: Implement this function
+        pass
+
+    def add_new_hobby(hobby_name: str) -> Hobby:
+        """given a hobby name, add a new hobby"""
+        hobby_name = hobby_name.strip().lower()
+        new_hobby = Hobby(name=hobby_name)
+        db.session.add(new_hobby)
+        db.session.commit()
+        __class__.calculate_all_relations_for_hobby(new_hobby)
+        return new_hobby
+
     def add_hobby_to_user(user_id: int, hobby_name: str) -> Hobby:
         """given a user and a hobbie, create a new Hobby if it does not exits,
         link the user to the hobby in the UserHobby table
@@ -68,9 +87,7 @@ class DbManager:
         # check if Hobby exists
         existing_hobby = Hobby.query.filter_by(name=hobby_name).first()
         if not existing_hobby:
-            existing_hobby = Hobby(name=hobby_name)
-            db.session.add(existing_hobby)
-            db.session.commit()
+            existing_hobby = __class__.add_new_hobby(hobby_name)
 
         # check if UserHobby already exists
         existing_user_hobby = UserHobby.query.filter_by(

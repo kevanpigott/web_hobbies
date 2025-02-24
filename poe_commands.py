@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from helpers import hobby_similarity
 from user_db import DbManager
 
 
@@ -44,6 +45,35 @@ def export_db_to_excel(directory, output_file):
     print(f"Database exported to '{output_file}' successfully.")
 
     # Close the connection
+    conn.close()
+
+
+def calculate_all_hobby_relations():
+    db_path = Path("instance") / DbManager.FILE_NAME
+    if not db_path.exists() or not db_path.is_file():
+        print(f"Database '{db_path}' does not exist.")
+        return
+
+    # Connect to the SQLite database
+    conn = sqlite3.connect(db_path)
+
+    # get list of hobbies
+    hobbies = pd.read_sql_query("SELECT id, name FROM hobby", conn).values
+
+    for h1_id, h1_name in hobbies:
+        for h2_id, h2_name in hobbies:
+            if h1_id <= h2_id:
+                continue
+
+            similarity = hobby_similarity(h1_name, h2_name)
+
+            # save the similarity score in the database in hobby_relations table
+            conn.execute(
+                "INSERT INTO hobby_relation (hobby_id1, hobby_id2, similarity) VALUES (?, ?, ?)",
+                (h1_id, h2_id, similarity),
+            )
+
+    conn.commit()
     conn.close()
 
 
@@ -91,6 +121,11 @@ if __name__ == "__main__":
         nargs=2,
         help="Path to the directory containing the database file and the input Excel file.",
     )
+    parser.add_argument(
+        "--calculate-all-hobby-relations",
+        action="store_true",
+        help="Calculate the similarity score between all hobbies.",
+    )
 
     args = parser.parse_args()
 
@@ -100,3 +135,5 @@ if __name__ == "__main__":
         export_db_to_excel(args.export_db[0], args.export_db[1])
     elif args.import_db:
         import_excel_to_db(args.import_db[0], args.import_db[1])
+    elif args.calculate_all_hobby_relations:
+        calculate_all_hobby_relations()

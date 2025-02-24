@@ -11,7 +11,8 @@ dependencies = [
     "flask (>=3.1.0,<4.0.0)",
     "flask-sqlalchemy (>=3.1.1,<4.0.0)",
     "pandas (>=2.2.3,<3.0.0)",
-    "openpyxl (>=3.1.5,<4.0.0)"
+    "openpyxl (>=3.1.5,<4.0.0)",
+    "sentence-transformers (>=3.4.1,<4.0.0)"
 ]
 
 
@@ -83,3 +84,4 @@ delete-db = { cmd = "python poe_commands.py --delete-db instance" }
 run-flask = { cmd = "flask run", env = { FLASK_APP = "flask_app.py" } }
 export-db = { cmd = "python poe_commands.py --export-db instance output.xlsx" }
 import-db = { cmd = "python poe_commands.py --import-db instance output.xlsx" }
+calculate-hobbie-relations = { cmd = "python poe_commands.py --calculate_all_hobby_relations"}
