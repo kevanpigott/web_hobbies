@@ -5,29 +5,42 @@ from helpers import UserException
 
 db = SQLAlchemy()
 
+
 class User(db.Model):
+    """Master table for users, one record per user"""
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
 
+
 class Hobby(db.Model):
+    """Master table for Hobbies, one record per user"""
+
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     name = db.Column(db.String(150), nullable=False)
-    user = db.relationship("User", backref=db.backref("hobbies", lazy=True))
+    user_count = db.Column(db.Integer, nullable=False, default=0)
+
+
+class UserHobby(db.Model):
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True)
+    hobby_id = db.Column(db.Integer, db.ForeignKey("hobby.id"), primary_key=True)
+
 
 class DbManager:
+    FILE_NAME = "tables.db"
 
     def init_db(app) -> None:
-
         db.init_app(app)
         with app.app_context():
             db.create_all()
 
     def get_user(username: str) -> User:
+        """given a username, return the user object"""
         return User.query.filter_by(username=username).first()
 
     def add_user(username: str, password: str) -> None:
+        """given user details, add a new user"""
         if __class__.get_user(username):
             raise UserException("Username already exists! Try again.")
 
@@ -35,44 +48,71 @@ class DbManager:
         new_user = User(username=username, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
-    
+
     def check_user_password(user: User, password: str) -> bool:
+        """given a user object and a password, check if password is correct"""
         return check_password_hash(user.password, password)
 
+    def add_hobby_to_user(user_id: int, hobby_name: str) -> Hobby:
+        """given a user and a hobbie, create a new Hobby if it does not exits,
+        link the user to the hobby in the UserHobby table
+        """
 
-    def add_hobby(user_id: str, hobby_name:str) -> Hobby:
-        existing_hobby = Hobby.query.filter_by(user_id=user_id, name=hobby_name).first()
-        if existing_hobby:
+        hobby_name = hobby_name.strip().lower()
+
+        # check if User exists
+        user = User.query.get(user_id)
+        if not user:
+            raise UserException("User does not exist!")
+
+        # check if Hobby exists
+        existing_hobby = Hobby.query.filter_by(name=hobby_name).first()
+        if not existing_hobby:
+            existing_hobby = Hobby(name=hobby_name)
+            db.session.add(existing_hobby)
+            db.session.commit()
+
+        # check if UserHobby already exists
+        existing_user_hobby = UserHobby.query.filter_by(
+            user_id=user_id, hobby_id=existing_hobby.id
+        ).first()
+        if existing_user_hobby:
             raise UserException("Hobby already exists for this user!")
 
-        new_hobby = Hobby(user_id=user_id, name=hobby_name)
-        db.session.add(new_hobby)
+        existing_hobby.user_count += 1
+        new_user_hobby = UserHobby(user_id=user_id, hobby_id=existing_hobby.id)
+        db.session.add(new_user_hobby)
         db.session.commit()
-        return new_hobby
+        return existing_hobby
 
+    def remove_hobby_from_user(user_id: int, hobby_id: str) -> None:
+        """given a user and a hobby, remove the hobby from the user"""
+        hobby = Hobby.query.filter_by(id=hobby_id).first()
+        if not hobby:
+            raise UserException("Hobby does not exist!")
+        user_hobby = UserHobby.query.filter_by(user_id=user_id, hobby_id=hobby.id).first()
+        if not user_hobby:
+            raise UserException("User does not have this hobby!")
 
-    def remove_hobby(hobby_id):
-        hobby = Hobby.query.get(hobby_id)
-        db.session.delete(hobby)
+        hobby = Hobby.query.get(hobby.id)
+        hobby.user_count -= 1
+        db.session.delete(user_hobby)
         db.session.commit()
 
+    def get_user_hobbies(user_id: int) -> list[Hobby]:
+        """given a user, return a list of hobbies"""
+        user_hobbies = UserHobby.query.filter_by(user_id=user_id).all()
+        # get the hobby names
+        return [Hobby.query.get(user_hobby.hobby_id) for user_hobby in user_hobbies]
 
-    def get_hobbies(user_id):
-        return Hobby.query.filter_by(user_id=user_id).all()
-
-
-    def get_all_hobbies():
-        return Hobby.query.all()
-    
     def number_of_hobbies():
         return Hobby.query.count()
 
     def get_most_popular_hobbies(limit=15, offset=0):
-        return (
-            db.session.query(Hobby.name, db.func.count(Hobby.user_id).label("user_count"))
-            .group_by(Hobby.name)
-            .order_by(db.func.count(Hobby.user_id).desc())
-            .offset(offset)
-            .limit(limit)
-            .all()
-        )
+        return Hobby.query.order_by(Hobby.user_count.desc()).limit(limit).offset(offset).all()
+
+    def recount_hobbies():
+        hobbies = Hobby.query.all()
+        for hobby in hobbies:
+            hobby.user_count = UserHobby.query.filter_by(hobby_id=hobby.id).count()
+        db.session.commit()

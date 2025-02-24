@@ -1,15 +1,13 @@
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 
 from helpers import UserException
-from user_db import (
-    DbManager
-)
+from user_db import DbManager
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"  # Needed for session handling
 
 # Configure the SQLite database
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DbManager.FILE_NAME}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize the database
@@ -25,7 +23,7 @@ def landing():
 def home():
     if "user" in session:
         user = DbManager.get_user(session["user"])
-        hobbies = DbManager.get_hobbies(user.id)
+        hobbies = DbManager.get_user_hobbies(user.id)
         return render_template("home.html", user=user, hobbies=hobbies)
     return redirect(url_for("landing"))
 
@@ -72,7 +70,7 @@ def add_hobby_route():
         user = DbManager.get_user(session["user"])
         hobby_name = request.json["hobby"]
         try:
-            new_hobby = DbManager.add_hobby(user.id, hobby_name)
+            new_hobby = DbManager.add_hobby_to_user(user.id, hobby_name)
             return jsonify(success=True, hobby_id=new_hobby.id)
         except UserException as e:
             return jsonify(success=False, message=str(e))
@@ -82,7 +80,8 @@ def add_hobby_route():
 @app.route("/remove_hobby/<int:hobby_id>")
 def remove_hobby_route(hobby_id):
     if "user" in session:
-        DbManager.remove_hobby(hobby_id)
+        user = DbManager.get_user(session["user"])
+        DbManager.remove_hobby_from_user(user.id, hobby_id)
         return redirect(url_for("home"))
     return redirect(url_for("landing"))
 
@@ -95,7 +94,10 @@ def popular_hobbies():
 
     hobbies = DbManager.get_most_popular_hobbies(limit=per_page, offset=offset)
 
-    return jsonify(hobbies=[{"name": hobby.name, "user_count": hobby.user_count} for hobby in hobbies], total_pages=DbManager.number_of_hobbies() // per_page + 1)
+    return jsonify(
+        hobbies=[{"name": hobby.name, "user_count": hobby.user_count} for hobby in hobbies],
+        total_pages=DbManager.number_of_hobbies() // per_page + 1,
+    )
 
 
 if __name__ == "__main__":
