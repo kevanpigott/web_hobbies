@@ -1,9 +1,8 @@
 import argparse
+import sqlite3
 from pathlib import Path
 
 import pandas as pd
-
-from user_db import db
 
 
 def delete_db(directory):
@@ -28,21 +27,55 @@ def export_db_to_excel(directory, output_file):
         print(f"Database '{db_path}' does not exist.")
         return
 
-    # Connect to the database
-    db_uri = f"sqlite:///{db_path}"
-    db.engine.dispose()
-    db.init_app(db_uri)
+    # Connect to the SQLite database
+    conn = sqlite3.connect(db_path)
 
-    # Query the data
-    users = pd.read_sql_table("user", db.engine)
-    hobbies = pd.read_sql_table("hobby", db.engine)
+    # Get the list of tables
+    tables = pd.read_sql_query("SELECT name FROM sqlite_master WHERE type='table'", conn)
 
-    # Write to Excel
+    # Write each table to a separate sheet in the Excel file
     with pd.ExcelWriter(output_file) as writer:
-        users.to_excel(writer, sheet_name="Users", index=False)
-        hobbies.to_excel(writer, sheet_name="Hobbies", index=False)
+        for table_name in tables["name"]:
+            df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
+            df.to_excel(writer, sheet_name=table_name, index=False)
+
+        # Export users with their hobbies
+        users_hobbies_query = """
+        SELECT u.id as user_id, u.username, h.id as hobby_id, h.name as hobby_name
+        FROM user u
+        LEFT JOIN hobby h ON u.id = h.user_id
+        """
+        users_hobbies = pd.read_sql_query(users_hobbies_query, conn)
+        users_hobbies.to_excel(writer, sheet_name="Users_Hobbies", index=False)
 
     print(f"Database exported to '{output_file}' successfully.")
+
+    # Close the connection
+    conn.close()
+
+
+def export_db_to_excel_old(directory, output_file):
+    db_path = Path(directory) / "users.db"
+    if not db_path.exists() or not db_path.is_file():
+        print(f"Database '{db_path}' does not exist.")
+        return
+
+    # Connect to the SQLite database
+    conn = sqlite3.connect(db_path)
+
+    # Get the list of tables
+    tables = pd.read_sql_query("SELECT name FROM sqlite_master WHERE type='table'", conn)
+
+    # Write each table to a separate sheet in the Excel file
+    with pd.ExcelWriter(output_file) as writer:
+        for table_name in tables["name"]:
+            df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
+            df.to_excel(writer, sheet_name=table_name, index=False)
+
+    print(f"Database exported to '{output_file}' successfully.")
+
+    # Close the connection
+    conn.close()
 
 
 if __name__ == "__main__":
