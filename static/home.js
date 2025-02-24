@@ -18,7 +18,7 @@ function addHobby(event) {
             newHobby.textContent = hobbyName + ' ';
             const removeLink = document.createElement('a');
             removeLink.href = `/remove_hobby/${data.hobby_id}`;
-            removeLink.textContent = 'Remove';
+            removeLink.textContent = 'x';
             newHobby.appendChild(removeLink);
             hobbyList.appendChild(newHobby);
             hobbyInput.value = '';
@@ -34,17 +34,28 @@ function loadPopularHobbies(page) {
     .then(data => {
         const popularHobbyList = document.getElementById('popular-hobby-list');
         popularHobbyList.innerHTML = '';
+
+        // set start variable of ol
+        popularHobbyList.start = data.start;
+
         data.hobbies.forEach(hobby => {
             const hobbyItem = document.createElement('li');
-            hobbyItem.textContent = `${hobby.name} (${hobby.user_count} users)`;
+            const hobbyLink = document.createElement('a');
+            hobbyLink.href = `/hobby/${hobby.id}`;
+            hobbyLink.textContent = `${hobby.name} (${hobby.user_count} users)`;
+            hobbyItem.appendChild(hobbyLink);
             popularHobbyList.appendChild(hobbyItem);
         });
+
+
+        // set page number, update buttons
+        document.getElementById('page-number').textContent = page;
+
         if (page === 1) {
             document.getElementById('prev-page').disabled = true;
         } else {
             document.getElementById('prev-page').disabled = false;
         } 
-        
         
         if (page == data.total_pages) {
             document.getElementById('next-page').disabled = true;

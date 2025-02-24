@@ -95,9 +95,19 @@ def popular_hobbies():
     hobbies = DbManager.get_most_popular_hobbies(limit=per_page, offset=offset)
 
     return jsonify(
-        hobbies=[{"name": hobby.name, "user_count": hobby.user_count} for hobby in hobbies],
+        hobbies=[
+            {"name": hobby.name, "user_count": hobby.user_count, "id": hobby.id} for hobby in hobbies
+        ],
         total_pages=DbManager.number_of_hobbies() // per_page + 1,
+        start=str(offset + 1),
     )
+
+
+@app.route("/hobby/<int:hobby_id>")
+def hobby(hobby_id):
+    hobby = DbManager.get_hobby(hobby_id)
+    users = DbManager.get_users_by_hobby(hobby_id)
+    return render_template("hobby.html", hobby=hobby, users=users)
 
 
 if __name__ == "__main__":

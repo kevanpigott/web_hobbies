@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ hobby.name }}</title>
+</head>
+<body>
+    <h2>{{ hobby.name }}</h2>
+    <h3>Users who enjoy this hobby:</h3>
+    <ul>
+        {% for user in users %}
+        <li>{{ user.username }}</li>
+        {% endfor %}
+    </ul>
+    <a href="/home">Back to Home</a>
+</body>
+</html>

@@ -133,3 +133,10 @@ class DbManager:
         for hobby in hobbies:
             hobby.user_count = UserHobby.query.filter_by(hobby_id=hobby.id).count()
         db.session.commit()
+
+    def get_hobby(hobby_id: int) -> Hobby:
+        return Hobby.query.get(hobby_id)
+
+    def get_users_by_hobby(hobby_id: int) -> list[User]:
+        user_hobbies = UserHobby.query.filter_by(hobby_id=hobby_id).all()
+        return [User.query.get(user_hobby.user_id) for user_hobby in user_hobbies]
