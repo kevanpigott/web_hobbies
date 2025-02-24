@@ -39,6 +39,18 @@ function loadPopularHobbies(page) {
             hobbyItem.textContent = `${hobby.name} (${hobby.user_count} users)`;
             popularHobbyList.appendChild(hobbyItem);
         });
+        if (page === 1) {
+            document.getElementById('prev-page').disabled = true;
+        } else {
+            document.getElementById('prev-page').disabled = false;
+        } 
+        
+        
+        if (page == data.total_pages) {
+            document.getElementById('next-page').disabled = true;
+        } else {
+            document.getElementById('next-page').disabled = false;
+        }
     });
 }
 

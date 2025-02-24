@@ -2,14 +2,7 @@ from flask import Flask, jsonify, redirect, render_template, request, session, u
 
 from helpers import UserException
 from user_db import (
-    add_hobby,
-    add_user,
-    check_user_password,
-    get_hobbies,
-    get_most_popular_hobbies,
-    get_user,
-    init_db,
-    remove_hobby,
+    DbManager
 )
 
 app = Flask(__name__)
@@ -20,7 +13,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize the database
-init_db(app)
+DbManager.init_db(app)
 
 
 @app.route("/")
@@ -31,8 +24,8 @@ def landing():
 @app.route("/home")
 def home():
     if "user" in session:
-        user = get_user(session["user"])
-        hobbies = get_hobbies(user.id)
+        user = DbManager.get_user(session["user"])
+        hobbies = DbManager.get_hobbies(user.id)
         return render_template("home.html", user=user, hobbies=hobbies)
     return redirect(url_for("landing"))
 
@@ -44,8 +37,8 @@ def login():
             username = request.form["username"]
             password = request.form["password"]
 
-            user = get_user(username)
-            if user and check_user_password(user, password):
+            user = DbManager.get_user(username)
+            if user and DbManager.check_user_password(user, password):
                 session["user"] = username
                 return redirect(url_for("home"))
             raise UserException("Invalid username or password! Try again.")
@@ -66,7 +59,7 @@ def register():
         if request.method == "POST":
             username = request.form["username"]
             password = request.form["password"]
-            add_user(username, password)
+            DbManager.add_user(username, password)
             return redirect(url_for("login"))
         return render_template("register.html")
     except UserException as e:
@@ -76,10 +69,10 @@ def register():
 @app.route("/add_hobby", methods=["POST"])
 def add_hobby_route():
     if "user" in session:
-        user = get_user(session["user"])
+        user = DbManager.get_user(session["user"])
         hobby_name = request.json["hobby"]
         try:
-            new_hobby = add_hobby(user.id, hobby_name)
+            new_hobby = DbManager.add_hobby(user.id, hobby_name)
             return jsonify(success=True, hobby_id=new_hobby.id)
         except UserException as e:
             return jsonify(success=False, message=str(e))
@@ -89,7 +82,7 @@ def add_hobby_route():
 @app.route("/remove_hobby/<int:hobby_id>")
 def remove_hobby_route(hobby_id):
     if "user" in session:
-        remove_hobby(hobby_id)
+        DbManager.remove_hobby(hobby_id)
         return redirect(url_for("home"))
     return redirect(url_for("landing"))
 
@@ -100,9 +93,9 @@ def popular_hobbies():
     per_page = 15
     offset = (page - 1) * per_page
 
-    hobbies = get_most_popular_hobbies(limit=per_page, offset=offset)
+    hobbies = DbManager.get_most_popular_hobbies(limit=per_page, offset=offset)
 
-    return jsonify(hobbies=[{"name": hobby.name, "user_count": hobby.user_count} for hobby in hobbies])
+    return jsonify(hobbies=[{"name": hobby.name, "user_count": hobby.user_count} for hobby in hobbies], total_pages=DbManager.number_of_hobbies() // per_page + 1)
 
 
 if __name__ == "__main__":
