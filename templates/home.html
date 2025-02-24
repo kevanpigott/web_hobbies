@@ -34,6 +34,37 @@
                 }
             });
         }
+
+        function loadPopularHobbies(page) {
+            fetch(`/popular_hobbies?page=${page}`)
+            .then(response => response.json())
+            .then(data => {
+                const popularHobbyList = document.getElementById('popular-hobby-list');
+                popularHobbyList.innerHTML = '';
+                data.hobbies.forEach(hobby => {
+                    const hobbyItem = document.createElement('li');
+                    hobbyItem.textContent = `${hobby.name} (${hobby.user_count} users)`;
+                    popularHobbyList.appendChild(hobbyItem);
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentPage = 1;
+            loadPopularHobbies(currentPage);
+
+            document.getElementById('prev-page').addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    loadPopularHobbies(currentPage);
+                }
+            });
+
+            document.getElementById('next-page').addEventListener('click', () => {
+                currentPage++;
+                loadPopularHobbies(currentPage);
+            });
+        });
     </script>
 </head>
 <body>
@@ -51,5 +82,10 @@
         <button type="submit">Add Hobby</button>
     </form>
     <a href="/logout">Logout</a>
+
+    <h3>Popular Hobbies:</h3>
+    <ul id="popular-hobby-list"></ul>
+    <button id="prev-page">Previous</button>
+    <button id="next-page">Next</button>
 </body>
 </html>

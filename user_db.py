@@ -62,3 +62,18 @@ def remove_hobby(hobby_id):
 
 def get_hobbies(user_id):
     return Hobby.query.filter_by(user_id=user_id).all()
+
+
+def get_all_hobbies():
+    return Hobby.query.all()
+
+
+def get_most_popular_hobbies(limit=15, offset=0):
+    return (
+        db.session.query(Hobby.name, db.func.count(Hobby.user_id).label("user_count"))
+        .group_by(Hobby.name)
+        .order_by(db.func.count(Hobby.user_id).desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )

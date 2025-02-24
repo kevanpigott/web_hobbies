@@ -6,6 +6,7 @@ from user_db import (
     add_user,
     check_user_password,
     get_hobbies,
+    get_most_popular_hobbies,
     get_user,
     init_db,
     remove_hobby,
@@ -91,6 +92,17 @@ def remove_hobby_route(hobby_id):
         remove_hobby(hobby_id)
         return redirect(url_for("home"))
     return redirect(url_for("landing"))
+
+
+@app.route("/popular_hobbies", methods=["GET"])
+def popular_hobbies():
+    page = int(request.args.get("page", 1))
+    per_page = 15
+    offset = (page - 1) * per_page
+
+    hobbies = get_most_popular_hobbies(limit=per_page, offset=offset)
+
+    return jsonify(hobbies=[{"name": hobby.name, "user_count": hobby.user_count} for hobby in hobbies])
 
 
 if __name__ == "__main__":
