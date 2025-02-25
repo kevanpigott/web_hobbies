@@ -4,15 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ hobby.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h2>{{ hobby.name }}</h2>
-    <h3>Users who enjoy this hobby:</h3>
-    <ul>
-        {% for user in users %}
-        <li>{{ user.username }}</li>
-        {% endfor %}
-    </ul>
-    <a href="/home">Back to Home</a>
+    <div class="navbar">
+        <a href="/home">Home</a>
+        <a href="/logout">Logout</a>
+    </div>
+    <div class="container">
+        <h2>{{ hobby.name }}</h2>
+        <h3>Users who enjoy this hobby:</h3>
+        <ul>
+            {% for user in users %}
+            <li><a href = "/user/{{ user.username }}">{{ user.username }}</a></li>
+            {% endfor %}
+        </ul>
+        <a class="btn" href="/home">Back to Home</a>
+    </div>
+    <div class="footer">
+        © 2025 Your Website. All rights reserved.
+    </div>
 </body>
 </html>

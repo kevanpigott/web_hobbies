@@ -4,11 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="file:///I:/Projects/Personal/kevans_scripts/web_hobbies/static/styles.css">
 </head>
 <body>
-    <h2>Welcome to Our Web App</h2>
-    <p>Please choose an option below:</p>
-    <a href="/login">Login</a><br>
-    <a href="/register">Create an Account</a>
+    <div class="container">
+        <h2>Hobby Site</h2>
+        <pre>
+Welcome, this site was created by <a href="https://www.linkedin.com/in/kevan-pigott/">Kevan Pigott</a> as an example implementation
+of a internal website for connecting employees with similar hobbies for one on ones. The content is served using Flask and stored in a normalized SQL database.
+hobbies are compaired using a <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2">sentence-transformer model</a>. passwords are hashed using <a href="https://en.wikipedia.org/wiki/Bcrypt">bcrypt</a>.
+        </pre>
+        <p>Please choose an option below:</p>
+        <a class="btn" href="/login">Login</a>
+        <a class="btn" href="/register">Create an Account</a>
+    </div>
+    <div class="footer">
+        © 2025 Your Website. All rights reserved.
+    </div>
 </body>
 </html>

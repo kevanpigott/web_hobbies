@@ -96,7 +96,7 @@ def import_excel_to_db(directory, input_file):
 
     # Write each sheet to a separate table in the database
     for table_name, data in df.items():
-        data.to_sql(table_name, conn, if_exists="replace", index=False)
+        data.to_sql(table_name, conn, if_exists="append", index=False)
 
     print(f"Excel file imported to '{db_path}' successfully.")
 

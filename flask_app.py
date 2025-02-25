@@ -13,9 +13,24 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Initialize the database
 DbManager.init_db(app)
 
+"""
+from flask_session import Session
+import redis
+# Configure server-side session storage
+app.config["SESSION_TYPE"] = "redis"
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_USE_SIGNER"] = True
+app.config["SESSION_REDIS"] = redis.StrictRedis(host="localhost", port=6379)
+
+# Initialize the session
+Session(app)
+"""
+
 
 @app.route("/")
 def landing():
+    if "user" in session:
+        return redirect(url_for("home"))
     return render_template("landing.html")
 
 
@@ -89,7 +104,7 @@ def remove_hobby_route(hobby_id):
 @app.route("/popular_hobbies", methods=["GET"])
 def popular_hobbies():
     page = int(request.args.get("page", 1))
-    per_page = 15
+    per_page = 5
     offset = (page - 1) * per_page
 
     hobbies = DbManager.get_most_popular_hobbies(limit=per_page, offset=offset)
@@ -108,6 +123,24 @@ def hobby(hobby_id):
     hobby = DbManager.get_hobby(hobby_id)
     users = DbManager.get_users_by_hobby(hobby_id)
     return render_template("hobby.html", hobby=hobby, users=users)
+
+
+@app.route("/user/<string:username>")
+def user(username):
+    if "user" in session:
+        current_user = DbManager.get_user(session["user"])
+        if current_user.username == username:
+            return redirect(url_for("home"))
+
+    user = DbManager.get_user(username)
+    hobbies = DbManager.get_user_hobbies(user.id)
+    return render_template("user.html", user=user, hobbies=hobbies)
+
+
+@app.route("/recount_hobbies")
+def recount_hobbies():
+    DbManager.recount_hobbies()
+    return redirect(url_for("home"))
 
 
 if __name__ == "__main__":

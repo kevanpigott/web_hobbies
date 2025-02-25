@@ -5,27 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
     <script src="static/home.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h2>Welcome, {{ user.username }}!</h2>
-    <p>You are now logged in.</p>
-    <h3>Your Hobbies:</h3>
-    <ul id="hobby-list">
-        {% for hobby in hobbies %}
-        <li>{{ hobby.name }} <a href="/remove_hobby/{{ hobby.id }}">x</a></li>
-        {% endfor %}
-    </ul>
-    <form onsubmit="addHobby(event)">
-        <label for="hobby">Add a new hobby:</label>
-        <input type="text" id="hobby" name="hobby" required>
-        <button type="submit">Add Hobby</button>
-    </form>
-    <a href="/logout">Logout</a>
-
-    <h3>Popular Hobbies:</h3>
-    <ol id="popular-hobby-list" start="1"></ol>
-    <button id="prev-page">Previous</button>
-    <span id="page-number">1</span>
-    <button id="next-page">Next</button>
+    <div class="navbar">
+        <a href="/home">Home</a>
+        <a href="/logout">Logout</a>
+    </div>
+    <div class="container">
+        <h2>Welcome, {{ user.username }}!</h2>
+        <p>You are now logged in.</p>
+        <h3>Your Hobbies:</h3>
+        <ul id="hobby-list">
+            {% for hobby in hobbies %}
+            <li>{{ hobby.name }} <a class="remove-btn" href="/remove_hobby/{{ hobby.id }}">x</a></li>
+            {% endfor %}
+        </ul>
+        <form onsubmit="addHobby(event)">
+            <label for="hobby">Add a new hobby:</label>
+            <input type="text" id="hobby" name="hobby" required>
+            <button type="submit" class="btn">Add Hobby</button>
+        </form>
+        <h3>Popular Hobbies:</h3>
+        <ol id="popular-hobby-list" start="1"></ol>
+        <button id="prev-page" class="btn">Previous</button>
+        <span id="page-number">1</span>
+        <button id="next-page" class="btn">Next</button>
+    </div>
+    <div class="footer">
+        © 2025 Your Website. All rights reserved.
+    </div>
 </body>
 </html>

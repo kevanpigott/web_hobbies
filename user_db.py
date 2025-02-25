@@ -1,5 +1,5 @@
+import bcrypt
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import UserException
 
@@ -9,15 +9,16 @@ db = SQLAlchemy()
 class User(db.Model):
     """Master table for users, one record per user"""
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
+    email = db.Column(db.String(150), nullable=True)
 
 
 class Hobby(db.Model):
     """Master table for Hobbies, one record per user"""
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(150), nullable=False)
     user_count = db.Column(db.Integer, nullable=False, default=0)
 
@@ -45,32 +46,31 @@ class DbManager:
         """given a username, return the user object"""
         return User.query.filter_by(username=username).first()
 
+    def get_user_by_id(user_id: int) -> User:
+        """given a user_id, return the user object"""
+        return User.query.get(user_id)
+
     def add_user(username: str, password: str) -> None:
         """given user details, add a new user"""
         if __class__.get_user(username):
             raise UserException("Username already exists! Try again.")
 
-        hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
-        new_user = User(username=username, password=hashed_password)
+        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+        new_user = User(
+            username=username,
+            password=hashed_password.decode("utf-8"),
+            email=f"{username}@fake_email.com",
+        )
         db.session.add(new_user)
         db.session.commit()
 
     def check_user_password(user: User, password: str) -> bool:
         """given a user object and a password, check if password is correct"""
-        return check_password_hash(user.password, password)
+        return bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8"))
 
     def calculate_all_relations_for_hobby(hobby: Hobby) -> None:
         # TODO: Implement this function
         pass
-
-    def add_new_hobby(hobby_name: str) -> Hobby:
-        """given a hobby name, add a new hobby"""
-        hobby_name = hobby_name.strip().lower()
-        new_hobby = Hobby(name=hobby_name)
-        db.session.add(new_hobby)
-        db.session.commit()
-        __class__.calculate_all_relations_for_hobby(new_hobby)
-        return new_hobby
 
     def add_hobby_to_user(user_id: int, hobby_name: str) -> Hobby:
         """given a user and a hobbie, create a new Hobby if it does not exits,
@@ -87,7 +87,10 @@ class DbManager:
         # check if Hobby exists
         existing_hobby = Hobby.query.filter_by(name=hobby_name).first()
         if not existing_hobby:
-            existing_hobby = __class__.add_new_hobby(hobby_name)
+            existing_hobby = Hobby(name=hobby_name)
+            db.session.add(existing_hobby)
+            db.session.commit()
+            __class__.calculate_all_relations_for_hobby(existing_hobby)
 
         # check if UserHobby already exists
         existing_user_hobby = UserHobby.query.filter_by(
