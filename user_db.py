@@ -1,4 +1,5 @@
 import bcrypt
+from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 
 from helpers import UserException
@@ -6,7 +7,7 @@ from helpers import UserException
 db = SQLAlchemy()
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     """Master table for users, one record per user"""
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -76,8 +77,9 @@ class DbManager:
         """given a user and a hobbie, create a new Hobby if it does not exits,
         link the user to the hobby in the UserHobby table
         """
-
         hobby_name = hobby_name.strip().lower()
+        if not hobby_name:
+            raise UserException("Hobby name cannot be empty!")
 
         # check if User exists
         user = User.query.get(user_id)
@@ -92,6 +94,10 @@ class DbManager:
             db.session.commit()
             __class__.calculate_all_relations_for_hobby(existing_hobby)
 
+        # Ensure the hobby has a valid ID
+        if existing_hobby.id is None:
+            raise UserException("Failed to add hobby to the database!")
+
         # check if UserHobby already exists
         existing_user_hobby = UserHobby.query.filter_by(
             user_id=user_id, hobby_id=existing_hobby.id
@@ -103,6 +109,7 @@ class DbManager:
         new_user_hobby = UserHobby(user_id=user_id, hobby_id=existing_hobby.id)
         db.session.add(new_user_hobby)
         db.session.commit()
+
         return existing_hobby
 
     def remove_hobby_from_user(user_id: int, hobby_id: str) -> None:

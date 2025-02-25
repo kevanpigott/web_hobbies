@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 
 from helpers import UserException
 from user_db import DbManager
@@ -13,6 +14,11 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Initialize the database
 DbManager.init_db(app)
 
+# Initialize the LoginManager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
 """
 from flask_session import Session
 import redis
@@ -26,21 +32,23 @@ app.config["SESSION_REDIS"] = redis.StrictRedis(host="localhost", port=6379)
 Session(app)
 """
 
+@login_manager.user_loader
+def load_user(user_id):
+    return DbManager.get_user_by_id(user_id)
+
 
 @app.route("/")
 def landing():
-    if "user" in session:
+    if current_user.is_authenticated:
         return redirect(url_for("home"))
     return render_template("landing.html")
 
 
 @app.route("/home")
+@login_required
 def home():
-    if "user" in session:
-        user = DbManager.get_user(session["user"])
-        hobbies = DbManager.get_user_hobbies(user.id)
-        return render_template("home.html", user=user, hobbies=hobbies)
-    return redirect(url_for("landing"))
+    hobbies = DbManager.get_user_hobbies(current_user.id)
+    return render_template("home.html", user=current_user, hobbies=hobbies)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -52,7 +60,7 @@ def login():
 
             user = DbManager.get_user(username)
             if user and DbManager.check_user_password(user, password):
-                session["user"] = username
+                login_user(user)
                 return redirect(url_for("home"))
             raise UserException("Invalid username or password! Try again.")
         except UserException as e:
@@ -61,8 +69,9 @@ def login():
 
 
 @app.route("/logout")
+@login_required
 def logout():
-    session.pop("user", None)
+    logout_user()
     return redirect(url_for("landing"))
 
 
@@ -80,25 +89,21 @@ def register():
 
 
 @app.route("/add_hobby", methods=["POST"])
+@login_required
 def add_hobby_route():
-    if "user" in session:
-        user = DbManager.get_user(session["user"])
-        hobby_name = request.json["hobby"]
-        try:
-            new_hobby = DbManager.add_hobby_to_user(user.id, hobby_name)
-            return jsonify(success=True, hobby_id=new_hobby.id)
-        except UserException as e:
-            return jsonify(success=False, message=str(e))
-    return jsonify(success=False)
+    hobby_name = request.json["hobby"]
+    try:
+        new_hobby = DbManager.add_hobby_to_user(current_user.id, hobby_name)
+        return jsonify(success=True, hobby_id=new_hobby.id)
+    except UserException as e:
+        return jsonify(success=False, message=str(e))
 
 
 @app.route("/remove_hobby/<int:hobby_id>")
+@login_required
 def remove_hobby_route(hobby_id):
-    if "user" in session:
-        user = DbManager.get_user(session["user"])
-        DbManager.remove_hobby_from_user(user.id, hobby_id)
-        return redirect(url_for("home"))
-    return redirect(url_for("landing"))
+    DbManager.remove_hobby_from_user(current_user.id, hobby_id)
+    return redirect(url_for("home"))
 
 
 @app.route("/popular_hobbies", methods=["GET"])
@@ -127,10 +132,8 @@ def hobby(hobby_id):
 
 @app.route("/user/<string:username>")
 def user(username):
-    if "user" in session:
-        current_user = DbManager.get_user(session["user"])
-        if current_user.username == username:
-            return redirect(url_for("home"))
+    if current_user.is_authenticated and current_user.username == username:
+        return redirect(url_for("home"))
 
     user = DbManager.get_user(username)
     hobbies = DbManager.get_user_hobbies(user.id)
@@ -138,6 +141,7 @@ def user(username):
 
 
 @app.route("/recount_hobbies")
+@login_required
 def recount_hobbies():
     DbManager.recount_hobbies()
     return redirect(url_for("home"))
