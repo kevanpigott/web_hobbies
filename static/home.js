@@ -1,3 +1,51 @@
+document.addEventListener("DOMContentLoaded", function() {
+    refreshMostCommonUser();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    let currentPage = 1;
+    loadPopularHobbies(currentPage);
+
+    document.getElementById('prev-page').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            loadPopularHobbies(currentPage);
+        }
+    });
+
+    document.getElementById('next-page').addEventListener('click', () => {
+        currentPage++;
+        loadPopularHobbies(currentPage);
+    });
+});
+
+
+function refreshMostCommonUser() {
+    fetch("/most_common_user")
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const mostCommonUser = data.user;
+                const mostCommonUserElement = document.getElementById("most-common-user");
+
+                // Remove existing child if it exists
+                while (mostCommonUserElement.firstChild) {
+                    mostCommonUserElement.removeChild(mostCommonUserElement.firstChild);
+                }
+
+                // Create and append the new link
+                const userLink = document.createElement('a');
+                userLink.href = `/user/${mostCommonUser.username}`;
+                userLink.textContent = mostCommonUser.username;
+                mostCommonUserElement.textContent = 'Most common user: ';
+                mostCommonUserElement.appendChild(userLink);
+            } else {
+                console.error(data.message);
+            }
+        })
+        .catch(error => console.error("Error fetching most common user:", error));
+}
+
 function addHobby(event) {
     event.preventDefault();
     const hobbyInput = document.getElementById('hobby');
@@ -22,6 +70,7 @@ function addHobby(event) {
             newHobby.appendChild(removeLink);
             hobbyList.appendChild(newHobby);
             hobbyInput.value = '';
+            refreshMostCommonUser()
         } else {
             alert(data.message || 'Failed to add hobby');
         }
@@ -65,19 +114,3 @@ function loadPopularHobbies(page) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    let currentPage = 1;
-    loadPopularHobbies(currentPage);
-
-    document.getElementById('prev-page').addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            loadPopularHobbies(currentPage);
-        }
-    });
-
-    document.getElementById('next-page').addEventListener('click', () => {
-        currentPage++;
-        loadPopularHobbies(currentPage);
-    });
-});

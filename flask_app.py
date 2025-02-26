@@ -139,6 +139,15 @@ def user(username):
     hobbies = DbManager.get_user_hobbies(user.id)
     return render_template("user.html", user=user, hobbies=hobbies)
 
+@app.route("/most_common_user", methods=["GET"])
+@login_required
+def most_common_user():
+    try:
+        most_common_user = DbManager.get_most_common_user(current_user.id)
+        return jsonify(success=True, user={"id": most_common_user.id, "username": most_common_user.username})
+    except UserException as e:
+        return jsonify(success=False, message=str(e))
+   
 
 @app.route("/recount_hobbies")
 @login_required
