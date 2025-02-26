@@ -190,4 +190,3 @@ function loadPopularHobbies(page) {
     })
     .catch(error => console.error("Error fetching popular hobbies:", error));
 }
-

@@ -32,6 +32,7 @@ app.config["SESSION_REDIS"] = redis.StrictRedis(host="localhost", port=6379)
 Session(app)
 """
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return DbManager.get_user_by_id(user_id)
@@ -48,6 +49,7 @@ def landing():
 @login_required
 def home():
     return render_template("home.html")
+
 
 @app.route("/get_current_user", methods=["GET"])
 @login_required
@@ -113,6 +115,7 @@ def remove_hobby_route(hobby_id):
     except UserException as e:
         return jsonify(success=False, message=str(e))
 
+
 @app.route("/popular_hobbies/<int:page_num>", methods=["GET"])
 def popular_hobbies(page_num):
     page = int(page_num)
@@ -146,6 +149,7 @@ def user(username):
     hobbies = DbManager.get_user_hobbies(user.id)
     return render_template("user.html", user=user, hobbies=hobbies)
 
+
 @app.route("/get_user_hobbies/<int:user_id>", methods=["GET"])
 def get_user_hobbies(user_id):
     try:
@@ -154,17 +158,19 @@ def get_user_hobbies(user_id):
         return jsonify(success=True, hobbies=[{"name": hobby.name, "id": hobby.id} for hobby in hobbies])
     except UserException as e:
         return jsonify(success=False, message=str(e))
-    
+
 
 @app.route("/most_common_user", methods=["GET"])
 @login_required
 def most_common_user():
     try:
         most_common_user = DbManager.get_most_common_user(current_user.id)
-        return jsonify(success=True, user={"id": most_common_user.id, "username": most_common_user.username})
+        return jsonify(
+            success=True, user={"id": most_common_user.id, "username": most_common_user.username}
+        )
     except UserException as e:
         return jsonify(success=False, message=str(e))
-   
+
 
 @app.route("/recount_hobbies")
 @login_required

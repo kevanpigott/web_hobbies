@@ -150,12 +150,12 @@ class DbManager:
     def get_users_by_hobby(hobby_id: int) -> list[User]:
         user_hobbies = UserHobby.query.filter_by(hobby_id=hobby_id).all()
         return [User.query.get(user_hobby.user_id) for user_hobby in user_hobbies]
-    
+
     def get_most_common_user(user_id: int) -> User:
-        """ Search for the user with the most common hobbies with the given user """
+        """Search for the user with the most common hobbies with the given user"""
         user_hobbies = UserHobby.query.filter_by(user_id=user_id).all()
         user_hobby_ids = [user_hobby.hobby_id for user_hobby in user_hobbies]
-        
+
         # Find users who share the same hobbies
         shared_hobbies = (
             db.session.query(UserHobby.user_id, db.func.count(UserHobby.hobby_id).label("shared_count"))
@@ -169,8 +169,9 @@ class DbManager:
         if not shared_hobbies:
             raise UserException("No other users share hobbies with the given user.")
 
+        # TODO: if most_common_user is not found, we should use the hobbie similarity
+        # table to find the most similar user.
+
         # Get the user with the most shared hobbies
         most_common_user_id = shared_hobbies.user_id
-        most_common_user = User.query.get(most_common_user_id)
-
-        return most_common_user
+        return User.query.get(most_common_user_id)
