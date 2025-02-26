@@ -22,7 +22,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 1. Clone the repository:
 
 ```sh
-git clone https://github.com/kevman19977/web_hobbies.git
+git clone https://github.com/kevanpigott/web_hobbies.git
 cd web_hobbies
 ```
 
