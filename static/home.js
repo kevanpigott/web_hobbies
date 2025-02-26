@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function addHobbyToList(hobbyName, hobbyId) {
     const hobbyList = document.getElementById('hobby-list');
     const newHobby = document.createElement('li');
+    newHobby.classList.add('li-hobby'); // Add the class li-hobby
     newHobby.textContent = hobbyName + ' ';
     const removeLink = document.createElement('a');
     removeLink.href = '#';
@@ -167,6 +168,7 @@ function loadPopularHobbies(page) {
         data.hobbies.forEach(hobby => {
             const hobbyItem = document.createElement('li');
             const hobbyLink = document.createElement('a');
+            hobbyItem.classList.add('li-hobby'); // Add the class li-hobby
             hobbyLink.href = `/hobby/${hobby.id}`;
             hobbyLink.textContent = `${hobby.name} (${hobby.user_count} users)`;
             hobbyItem.appendChild(hobbyLink);

@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link rel="stylesheet" href="file:///I:/Projects/Personal/kevans_scripts/web_hobbies/static/styles.css">
+    <title>{% block title %}Hobby Site{% endblock %}</title>
 </head>
 <body>
     <div class="container">
-        <h2>Hobby Site</h2>
         <pre>
 Welcome, this site was created by <a href="https://www.linkedin.com/in/kevan-pigott/">Kevan Pigott</a> as an example implementation
 of a internal website for connecting employees with similar hobbies. The content is hosted on an AWS EC2 instance, served using Flask, and stored in a normalized SQL database.
@@ -18,11 +17,13 @@ This serves as a demonstration of my theorized approach. As this site and server
 
 The code for this site can be found on github at <a href="https://github.com/kevanpigott/web_hobbies">github.com/kevanpigott/web_hobbies</a>
         </pre>
-        <p>Please choose an option below:</p>
-        <a class="btn" href="/login">Login</a>
-        <br>
-        <a class="btn" href="/register">Create an Account</a>
+        <div class="text-center">
+            <a class="btn btn-primary" href="/login">Continue</a>
+        </div>
     </div>
     {% include 'footer.html' %}
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
