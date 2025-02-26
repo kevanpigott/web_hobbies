@@ -47,8 +47,14 @@ def landing():
 @app.route("/home")
 @login_required
 def home():
-    hobbies = DbManager.get_user_hobbies(current_user.id)
-    return render_template("home.html", user=current_user, hobbies=hobbies)
+    return render_template("home.html")
+
+@app.route("/get_current_user", methods=["GET"])
+@login_required
+def get_current_user():
+    if current_user.is_authenticated:
+        return jsonify(success=True, user={"id": current_user.id, "username": current_user.username})
+    return jsonify(success=False, user="")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -88,10 +94,9 @@ def register():
         return render_template("register.html", message=str(e))
 
 
-@app.route("/add_hobby", methods=["POST"])
+@app.route("/add_hobby/<string:hobby_name>", methods=["POST"])
 @login_required
-def add_hobby_route():
-    hobby_name = request.json["hobby"]
+def add_hobby_route(hobby_name):
     try:
         new_hobby = DbManager.add_hobby_to_user(current_user.id, hobby_name)
         return jsonify(success=True, hobby_id=new_hobby.id)
@@ -99,16 +104,18 @@ def add_hobby_route():
         return jsonify(success=False, message=str(e))
 
 
-@app.route("/remove_hobby/<int:hobby_id>")
+@app.route("/remove_hobby/<int:hobby_id>", methods=["DELETE"])
 @login_required
 def remove_hobby_route(hobby_id):
-    DbManager.remove_hobby_from_user(current_user.id, hobby_id)
-    return redirect(url_for("home"))
+    try:
+        DbManager.remove_hobby_from_user(current_user.id, hobby_id)
+        return jsonify(success=True)
+    except UserException as e:
+        return jsonify(success=False, message=str(e))
 
-
-@app.route("/popular_hobbies", methods=["GET"])
-def popular_hobbies():
-    page = int(request.args.get("page", 1))
+@app.route("/popular_hobbies/<int:page_num>", methods=["GET"])
+def popular_hobbies(page_num):
+    page = int(page_num)
     per_page = 5
     offset = (page - 1) * per_page
 
@@ -118,7 +125,7 @@ def popular_hobbies():
         hobbies=[
             {"name": hobby.name, "user_count": hobby.user_count, "id": hobby.id} for hobby in hobbies
         ],
-        total_pages=DbManager.number_of_hobbies() // per_page + 1,
+        total_pages=DbManager.number_of_hobbies() // per_page,
         start=str(offset + 1),
     )
 
@@ -138,6 +145,16 @@ def user(username):
     user = DbManager.get_user(username)
     hobbies = DbManager.get_user_hobbies(user.id)
     return render_template("user.html", user=user, hobbies=hobbies)
+
+@app.route("/get_user_hobbies/<int:user_id>", methods=["GET"])
+def get_user_hobbies(user_id):
+    try:
+        user = DbManager.get_user_by_id(user_id)
+        hobbies = DbManager.get_user_hobbies(user.id)
+        return jsonify(success=True, hobbies=[{"name": hobby.name, "id": hobby.id} for hobby in hobbies])
+    except UserException as e:
+        return jsonify(success=False, message=str(e))
+    
 
 @app.route("/most_common_user", methods=["GET"])
 @login_required

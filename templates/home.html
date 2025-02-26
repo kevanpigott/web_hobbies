@@ -13,13 +13,11 @@
         <a href="/logout">Logout</a>
     </div>
     <div class="container">
-        <h2>Welcome, {{ user.username }}!</h2>
+        <h2 id="h2-welcome"></h2>
         <p>You are now logged in.</p>
         <h3>Your Hobbies:</h3>
         <ul id="hobby-list">
-            {% for hobby in hobbies %}
-            <li>{{ hobby.name }} <a class="remove-btn" href="/remove_hobby/{{ hobby.id }}">x</a></li>
-            {% endfor %}
+            <!-- where hobbies are inserted -->
         </ul>
         <form onsubmit="addHobby(event)">
             <label for="hobby">Add a new hobby:</label>

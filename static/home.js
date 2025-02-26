@@ -1,5 +1,41 @@
-document.addEventListener("DOMContentLoaded", function() {
-    refreshMostCommonUser();
+let current_user
+
+function get_current_user() {
+    // check if the global variable is already set
+    if (current_user) {
+        return current_user;
+    }
+    return fetch("/get_current_user")
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            current_user = data.user;
+            return current_user;
+        } else {
+            console.error(data.message);
+            return null;
+        }
+    })
+    .catch(error => {
+        console.error("Error fetching current user:", error);
+        return null;
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("DOM loaded");
+    // get the current user using the /get_current_user
+    get_current_user().then(user => {
+        if (user) {
+            // add the username to the h2-welcome element
+            const h2Welcome = document.getElementById('h2-welcome');
+            h2Welcome.textContent = `Welcome, ${user.username}!`;
+
+            // Refresh user hobbies and most common user
+            refreshUserHobbies();
+            // refreshMostCommonUser();
+        }
+    });
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -19,6 +55,56 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+function addHobbyToList(hobbyName, hobbyId) {
+    const hobbyList = document.getElementById('hobby-list');
+    const newHobby = document.createElement('li');
+    newHobby.textContent = hobbyName + ' ';
+    const removeLink = document.createElement('a');
+    removeLink.href = '#';
+    removeLink.textContent = 'x';
+    removeLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        removeHobby(hobbyId);
+    });
+    newHobby.appendChild(removeLink);
+    hobbyList.appendChild(newHobby);
+}
+
+function refreshUserHobbies() {
+    fetch(`/get_user_hobbies/${current_user.id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const hobbyList = document.getElementById('hobby-list');
+                hobbyList.innerHTML = '';
+                data.hobbies.forEach(hobby => {
+                    addHobbyToList(hobby.name, hobby.id);
+                });
+            } else {
+                console.error(data.message);
+            }
+        })
+        .catch(error => console.error("Error fetching user hobbies:", error));
+}
+
+function removeHobby(hobbyId) {
+    fetch(`/remove_hobby/${hobbyId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            refreshUserHobbies();
+            refreshMostCommonUser();
+        } else {
+            alert(data.message || 'Failed to remove hobby');
+        }
+    })
+    .catch(error => console.error("Error removing hobby:", error));
+}
 
 function refreshMostCommonUser() {
     fetch("/most_common_user")
@@ -50,35 +136,26 @@ function addHobby(event) {
     event.preventDefault();
     const hobbyInput = document.getElementById('hobby');
     const hobbyName = hobbyInput.value;
+    const encodedHobbyName = encodeURIComponent(hobbyName);
 
-    fetch('/add_hobby', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ hobby: hobbyName })
+    fetch(`/add_hobby/${encodedHobbyName}`, {
+        method: 'POST'
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            const hobbyList = document.getElementById('hobby-list');
-            const newHobby = document.createElement('li');
-            newHobby.textContent = hobbyName + ' ';
-            const removeLink = document.createElement('a');
-            removeLink.href = `/remove_hobby/${data.hobby_id}`;
-            removeLink.textContent = 'x';
-            newHobby.appendChild(removeLink);
-            hobbyList.appendChild(newHobby);
-            hobbyInput.value = '';
-            refreshMostCommonUser()
+            addHobbyToList(hobbyName, data.hobby_id);
+            hobbyInput.value = ''; // Clear the input field after adding the hobby
+            refreshMostCommonUser();
         } else {
             alert(data.message || 'Failed to add hobby');
         }
-    });
+    })
+    .catch(error => console.error("Error adding hobby:", error));
 }
 
 function loadPopularHobbies(page) {
-    fetch(`/popular_hobbies?page=${page}`)
+    fetch(`/popular_hobbies/${page}`)
     .then(response => response.json())
     .then(data => {
         const popularHobbyList = document.getElementById('popular-hobby-list');
@@ -96,7 +173,6 @@ function loadPopularHobbies(page) {
             popularHobbyList.appendChild(hobbyItem);
         });
 
-
         // set page number, update buttons
         document.getElementById('page-number').textContent = page;
 
@@ -111,6 +187,7 @@ function loadPopularHobbies(page) {
         } else {
             document.getElementById('next-page').disabled = false;
         }
-    });
+    })
+    .catch(error => console.error("Error fetching popular hobbies:", error));
 }
 
