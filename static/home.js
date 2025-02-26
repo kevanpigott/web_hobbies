@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Refresh user hobbies and most common user
             refreshUserHobbies();
-            // refreshMostCommonUser();
+            refreshMostCommonUser();
         }
     });
 });
