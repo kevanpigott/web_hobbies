@@ -14,6 +14,12 @@
 Welcome, this site was created by <a href="https://www.linkedin.com/in/kevan-pigott/">Kevan Pigott</a> as an example implementation
 of a internal website for connecting employees with similar hobbies for one on ones. The content is served using Flask and stored in a normalized SQL database.
 hobbies are compaired using a <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2">sentence-transformer model</a>. passwords are hashed using <a href="https://en.wikipedia.org/wiki/Bcrypt">bcrypt</a>.
+
+Currently there is no username or password requirements, you can enter any username(that is not taken) and password to register.
+Although passwords are hashed using bcrypt, i would recommend not using your real password. As well currently there is no input validation,
+so if your name is <a href="https://xkcd.com/327/">"Robert'); DROP TABLE Users;--"</a> maybe just go by your nickname Bobby.
+
+The code for this site can be found on github at <a href="https://github.com/kevanpigott/web_hobbies">github.com/kevanpigott/web_hobbies</a>
         </pre>
         <p>Please choose an option below:</p>
         <a class="btn" href="/login">Login</a>
