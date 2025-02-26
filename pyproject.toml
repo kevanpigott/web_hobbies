@@ -82,6 +82,8 @@ mypy = "^1.15.0"
 pyclean = "^3.1.0"
 pre-commit = "^4.1.0"
 isort = "^6.0.0"
+gunicorn = "^23.0.0"
+waitress = "^3.0.2"
 
 [tool.poe.tasks]
 delete-db = { cmd = "python poe_commands.py --delete-db instance" }
@@ -89,3 +91,5 @@ run-flask = { cmd = "flask run", env = { FLASK_APP = "flask_app.py" } }
 export-db = { cmd = "python poe_commands.py --export-db instance output.xlsx" }
 import-db = { cmd = "python poe_commands.py --import-db instance output.xlsx" }
 calculate-hobbie-relations = { cmd = "python poe_commands.py --calculate_all_hobby_relations"}
+run-production-windows = {cmd = "waitress-serve --listen=127.0.0.1:5000 wsgi:app"}
+run-production-linux = {cmd = "gunicorn -c gunicorn_config.py wsgi:app"}
