@@ -38,22 +38,27 @@ class HobbyRelation(db.Model):
 class DbManager:
     FILE_NAME = "tables.db"
 
-    def init_db(app) -> None:
+    @classmethod
+    def init_db(cls, app) -> None:
+        """Initialize the database with the given Flask app."""
         db.init_app(app)
         with app.app_context():
             db.create_all()
 
-    def get_user(username: str) -> User:
-        """given a username, return the user object"""
+    @classmethod
+    def get_user(cls, username: str) -> User:
+        """Given a username, return the user object."""
         return User.query.filter_by(username=username).first()
 
-    def get_user_by_id(user_id: int) -> User:
-        """given a user_id, return the user object"""
+    @classmethod
+    def get_user_by_id(cls, user_id: int) -> User:
+        """Given a user_id, return the user object."""
         return User.query.get(user_id)
 
-    def add_user(username: str, password: str) -> None:
-        """given user details, add a new user"""
-        if __class__.get_user(username):
+    @classmethod
+    def add_user(cls, username: str, password: str) -> None:
+        """Given user details, add a new user."""
+        if cls.get_user(username):
             raise UserException("Username already exists! Try again.")
 
         hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
@@ -65,40 +70,43 @@ class DbManager:
         db.session.add(new_user)
         db.session.commit()
 
-    def check_user_password(user: User, password: str) -> bool:
-        """given a user object and a password, check if password is correct"""
+    @classmethod
+    def check_user_password(cls, user: User, password: str) -> bool:
+        """Given a user object and a password, check if the password is correct."""
         return bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8"))
 
-    def calculate_all_relations_for_hobby(hobby: Hobby) -> None:
+    @classmethod
+    def calculate_all_relations_for_hobby(cls, hobby: Hobby) -> None:
+        """Calculate all relations for a given hobby."""
         # TODO: Implement this function
-        pass
 
-    def add_hobby_to_user(user_id: int, hobby_name: str) -> Hobby:
-        """given a user and a hobbie, create a new Hobby if it does not exits,
-        link the user to the hobby in the UserHobby table
+    @classmethod
+    def add_hobby_to_user(cls, user_id: int, hobby_name: str) -> Hobby:
+        """Given a user and a hobby, create a new Hobby if it does not exist,
+        link the user to the hobby in the UserHobby table.
         """
         hobby_name = hobby_name.strip().lower()
         if not hobby_name:
             raise UserException("Hobby name cannot be empty!")
 
-        # check if User exists
+        # Check if User exists
         user = User.query.get(user_id)
         if not user:
             raise UserException("User does not exist!")
 
-        # check if Hobby exists
+        # Check if Hobby exists
         existing_hobby = Hobby.query.filter_by(name=hobby_name).first()
         if not existing_hobby:
             existing_hobby = Hobby(name=hobby_name)
             db.session.add(existing_hobby)
             db.session.commit()
-            __class__.calculate_all_relations_for_hobby(existing_hobby)
+            cls.calculate_all_relations_for_hobby(existing_hobby)
 
         # Ensure the hobby has a valid ID
         if existing_hobby.id is None:
             raise UserException("Failed to add hobby to the database!")
 
-        # check if UserHobby already exists
+        # Check if UserHobby already exists
         existing_user_hobby = UserHobby.query.filter_by(
             user_id=user_id, hobby_id=existing_hobby.id
         ).first()
@@ -112,8 +120,9 @@ class DbManager:
 
         return existing_hobby
 
-    def remove_hobby_from_user(user_id: int, hobby_id: str) -> None:
-        """given a user and a hobby, remove the hobby from the user"""
+    @classmethod
+    def remove_hobby_from_user(cls, user_id: int, hobby_id: int) -> None:
+        """Given a user and a hobby, remove the hobby from the user."""
         hobby = Hobby.query.filter_by(id=hobby_id).first()
         if not hobby:
             raise UserException("Hobby does not exist!")
@@ -126,33 +135,45 @@ class DbManager:
         db.session.delete(user_hobby)
         db.session.commit()
 
-    def get_user_hobbies(user_id: int) -> list[Hobby]:
-        """given a user, return a list of hobbies"""
+    @classmethod
+    def get_user_hobbies(cls, user_id: int) -> list[Hobby]:
+        """Given a user, return a list of hobbies."""
         user_hobbies = UserHobby.query.filter_by(user_id=user_id).all()
-        # get the hobby names
+        # Get the hobby names
         return [Hobby.query.get(user_hobby.hobby_id) for user_hobby in user_hobbies]
 
-    def number_of_hobbies():
+    @classmethod
+    def number_of_hobbies(cls):
+        """Return the total number of hobbies."""
         return Hobby.query.count()
 
-    def get_most_popular_hobbies(limit=15, offset=0):
+    @classmethod
+    def get_most_popular_hobbies(cls, limit=15, offset=0):
+        """Return a list of the most popular hobbies."""
         return Hobby.query.order_by(Hobby.user_count.desc()).limit(limit).offset(offset).all()
 
-    def recount_hobbies():
+    @classmethod
+    def recount_hobbies(cls):
+        """Recount the number of users for each hobby."""
         hobbies = Hobby.query.all()
         for hobby in hobbies:
             hobby.user_count = UserHobby.query.filter_by(hobby_id=hobby.id).count()
         db.session.commit()
 
-    def get_hobby(hobby_id: int) -> Hobby:
+    @classmethod
+    def get_hobby(cls, hobby_id: int) -> Hobby:
+        """Return a hobby by its ID."""
         return Hobby.query.get(hobby_id)
 
-    def get_users_by_hobby(hobby_id: int) -> list[User]:
+    @classmethod
+    def get_users_by_hobby(cls, hobby_id: int) -> list[User]:
+        """Return a list of users who have a specific hobby."""
         user_hobbies = UserHobby.query.filter_by(hobby_id=hobby_id).all()
         return [User.query.get(user_hobby.user_id) for user_hobby in user_hobbies]
 
-    def get_most_common_user(user_id: int) -> User:
-        """Search for the user with the most common hobbies with the given user"""
+    @classmethod
+    def get_most_common_user(cls, user_id: int) -> User:
+        """Search for the user with the most common hobbies with the given user."""
         user_hobbies = UserHobby.query.filter_by(user_id=user_id).all()
         user_hobby_ids = [user_hobby.hobby_id for user_hobby in user_hobbies]
 
@@ -169,7 +190,7 @@ class DbManager:
         if not shared_hobbies:
             raise UserException("No other users share hobbies with the given user.")
 
-        # TODO: if most_common_user is not found, we should use the hobbie similarity
+        # TODO: if most_common_user is not found, we should use the hobby similarity
         # table to find the most similar user.
 
         # Get the user with the most shared hobbies
