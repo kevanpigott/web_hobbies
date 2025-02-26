@@ -1,3 +1,5 @@
+import logging
+from datetime import datetime
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 
@@ -19,6 +21,30 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', handlers=[
+    logging.FileHandler("app.log"),
+    logging.StreamHandler()
+])
+
+# Log each request
+@app.before_request
+def log_request_info():
+    ip = request.remote_addr
+    user = current_user.username if current_user.is_authenticated else "Anonymous"
+    logging.info(f"Request from {ip} by {user}: {request.method} {request.url} - Data: {request.get_data()}")
+
+# Log each response
+@app.after_request
+def log_response_info(response):
+    ip = request.remote_addr
+    user = current_user.username if current_user.is_authenticated else "Anonymous"
+    try:
+        response_data = response.get_data()
+    except RuntimeError:
+        response_data = b""
+    logging.info(f"Response to {ip} by {user}: {response.status} - Data: {response_data}")
+    return response
 
 @login_manager.user_loader
 def load_user(user_id) -> User:
@@ -89,6 +115,7 @@ def login():
             user = DbManager.get_user(username)
             if user and DbManager.check_user_password(user, password):
                 login_user(user)
+                logging.info(f"User {username} logged in from {request.remote_addr} at {datetime.now()}")
                 return redirect(url_for("home"))
             raise UserException("Invalid username or password! Try again.")
         except UserException as e:
