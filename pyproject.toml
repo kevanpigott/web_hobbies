@@ -93,3 +93,4 @@ import-db = { cmd = "python poe_commands.py --import-db instance output.xlsx" }
 calculate-hobbie-relations = { cmd = "python poe_commands.py --calculate_all_hobby_relations"}
 run-production-windows = {cmd = "waitress-serve --listen=127.0.0.1:5000 wsgi:app"}
 run-production-linux = {cmd = "gunicorn -c gunicorn_config.py wsgi:app"}
+run = { cmd = "flask run", env = { FLASK_APP = "flask_app.py", FLASK_ENV = "development" } }
