@@ -1,5 +1,7 @@
 import logging
 from datetime import datetime
+from math import ceil
+
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 
@@ -22,17 +24,22 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', handlers=[
-    logging.FileHandler("app.log"),
-    logging.StreamHandler()
-])
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s: %(message)s",
+    handlers=[logging.FileHandler("app.log"), logging.StreamHandler()],
+)
+
 
 # Log each request
 @app.before_request
 def log_request_info():
     ip = request.remote_addr
     user = current_user.username if current_user.is_authenticated else "Anonymous"
-    logging.info(f"Request from {ip} by {user}: {request.method} {request.url} - Data: {request.get_data()}")
+    logging.info(
+        f"Request from {ip} by {user}: {request.method} {request.url} - Data: {request.get_data()}"
+    )
+
 
 # Log each response
 @app.after_request
@@ -45,6 +52,7 @@ def log_response_info(response):
         response_data = b""
     logging.info(f"Response to {ip} by {user}: {response.status} - Data: {response_data}")
     return response
+
 
 @login_manager.user_loader
 def load_user(user_id) -> User:
@@ -216,7 +224,7 @@ def popular_hobbies(page_num):
         hobbies=[
             {"name": hobby.name, "user_count": hobby.user_count, "id": hobby.id} for hobby in hobbies
         ],
-        total_pages=DbManager.number_of_hobbies() // per_page,
+        total_pages=ceil(DbManager.number_of_hobbies() / per_page),
         start=str(offset + 1),
     )
 
