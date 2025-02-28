@@ -65,7 +65,8 @@ function fetchOneOnOnes() {
             const oneOnOneList = document.getElementById('one-on-one-list');
             oneOnOneList.innerHTML = '';
             data.one_on_ones.forEach(meeting => {
-                const localDate = new Date(meeting.date).toLocaleString();
+                const utcDate = new Date(meeting.date + 'Z'); // Ensure the date string is treated as UTC
+                const localDate = utcDate.toLocaleString(); // convert UTC back to Local
                 const li = document.createElement('li');
                 li.className = 'list-group-item d-flex justify-content-between align-items-center';
                 li.innerHTML = `

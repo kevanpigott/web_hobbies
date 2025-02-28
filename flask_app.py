@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from math import ceil
 
+import pytz
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 
@@ -328,21 +329,21 @@ def schedule_one_on_one(user_id, datetime_str):
 
     Args:
         user_id (int): The ID of the user to schedule the meeting with.
-        datetime_str (str): The date and time of the meeting in the format 'YYYY-MM-DD-HH-MM'.
+        datetime_str (str): The date and time of the meeting
 
     Returns:
         Response: A JSON response indicating success or failure.
     """
     try:
-        # Convert the date and time string to a datetime object
-        meeting_datetime = datetime.strptime(datetime_str, "%Y-%m-%d-%H-%M")
+        # Convert string to datetime object in UTC
+        utc_time = datetime.fromisoformat(datetime_str).replace(tzinfo=pytz.UTC)
 
         # Make sure the meeting is in the future
-        if meeting_datetime < datetime.now():
+        if utc_time < datetime.now(pytz.UTC):
             raise UserException("Meeting must be scheduled in the future.")
 
         # Schedule the one-on-one meeting
-        DbManager.add_one_on_one(current_user.id, user_id, meeting_datetime)
+        DbManager.add_one_on_one(current_user.id, user_id, utc_time)
         return jsonify(success=True)
     except ValueError:
         return jsonify(success=False, message="Invalid date and time format. Use 'YYYY-MM-DD-HH-MM'.")

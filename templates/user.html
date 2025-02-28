@@ -49,11 +49,10 @@
     <script>
         document.getElementById('scheduleForm').addEventListener('submit', function(event) {
         event.preventDefault();
-        const datetimeLocal = document.getElementById('meetingDatetime').value;
-        const datetime = new Date(datetimeLocal);
-        const utcDatetime = new Date(datetime.getTime() + datetime.getTimezoneOffset() * 60000).toISOString().slice(0, 16).replace('T', '-').replace(/:/g, '-');
+        const selectedDate = new Date(document.getElementById('meetingDatetime').value);
+        const utcDate = selectedDate.toISOString();
         const userId = {{ user.id }};
-        const url = `/schedule_one_on_one/${userId}/${utcDatetime}`;
+        const url = `/schedule_one_on_one/${userId}/${utcDate}`;
         fetch(url, {
             method: 'POST',
             headers: {
