@@ -28,13 +28,45 @@
         <ul>
             {% for hobby in hobbies %}
             <li class="list-group-item">
-                <a href = "/hobby/{{ hobby.id }}" class="text-decoration-none">{{ hobby.name }}</a>
+                <a href="/hobby/{{ hobby.id }}" class="text-decoration-none">{{ hobby.name }}</a>
             </li>
             {% endfor %}
         </ul>
-
+        <hr class="solid">
+        <h3>Schedule a One-on-One Meeting</h3>
+        <form id="scheduleForm" method="POST" class="form-inline">
+            <div class="form-group mb-2">
+                <label for="meetingDatetime" class="mr-2">Select Date and Time:</label>
+                <input type="datetime-local" id="meetingDatetime" name="meetingDatetime" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary mb-2 ml-2">Schedule Meeting</button>
+        </form>
+        <hr class="solid">
         <a class="btn btn-primary mt-3" href="/home">Back to Home</a>
     </div>
     {% include 'footer.html' %}
+
+    <script>
+        document.getElementById('scheduleForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const datetime = document.getElementById('meetingDatetime').value.replace(/:/g, '-').replace('T', '-');
+            console.log(datetime);
+            const userId = {{ user.id }};
+            const url = `/schedule_one_on_one/${userId}/${datetime}`;
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('Meeting scheduled successfully!');
+                  } else {
+                      alert('Failed to schedule meeting: ' + data.message);
+                  }
+              });
+        });
+    </script>
 </body>
 </html>

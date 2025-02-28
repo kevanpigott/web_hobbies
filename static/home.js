@@ -34,9 +34,12 @@ document.addEventListener("DOMContentLoaded", () => {
             // Refresh user hobbies and most common user
             refreshUserHobbies();
             refreshMostCommonUser();
+            refreshMostCommonUserNeverMet();
+            fetchOneOnOnes();
         }
     });
 });
+
 
 document.addEventListener('DOMContentLoaded', () => {
     let currentPage = 1;
@@ -54,6 +57,38 @@ document.addEventListener('DOMContentLoaded', () => {
         loadPopularHobbies(currentPage);
     });
 });
+
+function fetchOneOnOnes() {
+    fetch(`/get_user_one_on_ones/${current_user.id}`)
+        .then(response => response.json())
+        .then(data => {
+            const oneOnOneList = document.getElementById('one-on-one-list');
+            oneOnOneList.innerHTML = '';
+            data.one_on_ones.forEach(meeting => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    ${meeting.date} with <a href="/user/${meeting.user.username}">${meeting.user.username}</a>
+                    <button class="btn btn-danger btn-sm" onclick="cancelOneOnOne(${meeting.id})">Cancel</button>
+                `;
+                oneOnOneList.appendChild(li);
+            });
+        });
+}
+
+function cancelOneOnOne(meetingId) {
+    fetch(`/cancel_one_on_one/${meetingId}`, {
+        method: 'DELETE'
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              fetchOneOnOnes();
+              refreshMostCommonUserNeverMet();
+          } else {
+              alert('Failed to cancel meeting: ' + data.message);
+          }
+      });
+}
 
 function addHobbyToList(hobbyName, hobbyId) {
     const hobbyList = document.getElementById('hobby-list');
@@ -100,6 +135,7 @@ function removeHobby(hobbyId) {
         if (data.success) {
             refreshUserHobbies();
             refreshMostCommonUser();
+            refreshMostCommonUserNeverMet();
         } else {
             alert(data.message || 'Failed to remove hobby');
         }
@@ -133,6 +169,32 @@ function refreshMostCommonUser() {
         .catch(error => console.error("Error fetching most common user:", error));
 }
 
+function refreshMostCommonUserNeverMet() {
+    fetch("/most_common_user_never_met")
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const mostCommonUserNeverMet = data.user;
+            const mostCommonUserNeverMetElement = document.getElementById("most-common-user-never-met");
+
+            // Remove existing child if it exists
+            while (mostCommonUserNeverMetElement.firstChild) {
+                mostCommonUserNeverMetElement.removeChild(mostCommonUserNeverMetElement.firstChild);
+            }
+
+            // Create and append the new link
+            const userLink = document.createElement('a');
+            userLink.href = `/user/${mostCommonUserNeverMet.username}`;
+            userLink.textContent = mostCommonUserNeverMet.username;
+            mostCommonUserNeverMetElement.textContent = 'Most common user never met: ';
+            mostCommonUserNeverMetElement.appendChild(userLink);
+        } else {
+            console.error(data.message);
+        }
+    })
+    .catch(error => console.error("Error fetching most common user never met:", error));
+}
+
 function addHobby(event) {
     event.preventDefault();
     const hobbyInput = document.getElementById('hobby');
@@ -148,6 +210,7 @@ function addHobby(event) {
             addHobbyToList(hobbyName, data.hobby_id);
             hobbyInput.value = ''; // Clear the input field after adding the hobby
             refreshMostCommonUser();
+            refreshMostCommonUserNeverMet();
         } else {
             alert(data.message || 'Failed to add hobby');
         }
@@ -168,7 +231,8 @@ function loadPopularHobbies(page) {
         data.hobbies.forEach(hobby => {
             const hobbyItem = document.createElement('li');
             const hobbyLink = document.createElement('a');
-            hobbyItem.classList.add('li-hobby'); // Add the class li-hobby
+            hobbyItem.classList.add('list-group-item'); // Add the class li-hobby
+            hobbyLink.classList.add('class="text-decoration-none'); // Add the class li-hobby
             hobbyLink.href = `/hobby/${hobby.id}`;
             hobbyLink.textContent = `${hobby.name} (${hobby.user_count} users)`;
             hobbyItem.appendChild(hobbyLink);

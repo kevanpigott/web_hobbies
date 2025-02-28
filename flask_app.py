@@ -302,6 +302,109 @@ def most_common_user():
         return jsonify(success=False, message=str(e))
 
 
+@app.route("/most_common_user_never_met", methods=["GET"])
+@login_required
+def most_common_user_never_met():
+    """
+    Get the user with the most common hobbies that the current user has never met.
+
+    Returns:
+        Response: A JSON response with the most common user's information.
+    """
+    try:
+        most_common_user = DbManager.get_most_common_user_never_met(current_user.id)
+        return jsonify(
+            success=True, user={"id": most_common_user.id, "username": most_common_user.username}
+        )
+    except UserException as e:
+        return jsonify(success=False, message=str(e))
+
+
+@app.route("/schedule_one_on_one/<int:user_id>/<string:datetime_str>", methods=["POST"])
+@login_required
+def schedule_one_on_one(user_id, datetime_str):
+    """
+    Schedule a one-on-one meeting with another user.
+
+    Args:
+        user_id (int): The ID of the user to schedule the meeting with.
+        datetime_str (str): The date and time of the meeting in the format 'YYYY-MM-DD-HH-MM'.
+
+    Returns:
+        Response: A JSON response indicating success or failure.
+    """
+    try:
+        # Convert the date and time string to a datetime object
+        meeting_datetime = datetime.strptime(datetime_str, "%Y-%m-%d-%H-%M")
+
+        # Make sure the meeting is in the future
+        if meeting_datetime < datetime.now():
+            raise UserException("Meeting must be scheduled in the future.")
+
+        # Schedule the one-on-one meeting
+        DbManager.add_one_on_one(current_user.id, user_id, meeting_datetime)
+        return jsonify(success=True)
+    except ValueError:
+        return jsonify(success=False, message="Invalid date and time format. Use 'YYYY-MM-DD-HH-MM'.")
+    except UserException as e:
+        return jsonify(success=False, message=str(e))
+
+
+@app.route("/cancel_one_on_one/<int:one_on_one_id>", methods=["DELETE"])
+@login_required
+def cancel_one_on_one(one_on_one_id):
+    """
+    Cancel a one-on-one meeting with another user.
+
+    Args:
+        one_on_one_id (int): The ID of the one-on-one meeting to cancel.
+
+    Returns:
+        Response: A JSON response indicating success or failure.
+    """
+    try:
+        # check if user is part of the one-on-one meeting
+        one_on_one = DbManager.get_one_on_one(one_on_one_id)
+        if current_user.id != one_on_one.user_id1 and current_user.id != one_on_one.user_id2:
+            raise UserException("You are not part of this one-on-one meeting.")
+
+        DbManager.cancel_one_on_one(one_on_one_id)
+        return jsonify(success=True)
+    except UserException as e:
+        return jsonify(success=False, message=str(e))
+
+
+@app.route("/get_user_one_on_ones/<int:user_id>", methods=["GET"])
+@login_required
+def get_user_one_on_ones(user_id):
+    """
+    Get a list of users that the current user has one-on-one hobbies with.
+
+    Args:
+        user_id (int): The ID of the user to retrieve one-on-one hobbies for.
+
+    Returns:
+        Response: A JSON response with the list of one-on-one hobbies.
+    """
+    try:
+        user = DbManager.get_user_by_id(user_id)
+        one_on_ones = DbManager.get_user_one_on_ones(user.id)
+
+        ret = []
+        for one_on_one in one_on_ones:
+            meeting_partner = DbManager.get_user_by_id(
+                one_on_one.user_id1 if one_on_one.user_id1 != current_user.id else one_on_one.user_id2
+            )
+            ret.append({
+                "date": str(one_on_one.date),
+                "user": {"username": meeting_partner.username, "id": meeting_partner.id},
+                "id": one_on_one.id,
+            })
+        return jsonify(success=True, one_on_ones=ret)
+    except UserException as e:
+        return jsonify(success=False, message=str(e))
+
+
 @app.route("/recount_hobbies")
 @login_required
 def recount_hobbies():

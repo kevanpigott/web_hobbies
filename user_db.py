@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import bcrypt
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
@@ -33,6 +35,19 @@ class HobbyRelation(db.Model):
     hobby_id1 = db.Column(db.Integer, db.ForeignKey("hobby.id"), primary_key=True)
     hobby_id2 = db.Column(db.Integer, db.ForeignKey("hobby.id"), primary_key=True)
     similarity = db.Column(db.Float, nullable=False)
+
+
+class OneOnOne(db.Model):
+    """
+    This assumes that users can have more than one one-on-one meeting, which is realistic.
+    """
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id1 = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id2 = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+
+    __table_args__ = (db.UniqueConstraint("user_id1", "user_id2", "date", name="_user_meeting_uc"),)
 
 
 class DbManager:
@@ -196,3 +211,83 @@ class DbManager:
         # Get the user with the most shared hobbies
         most_common_user_id = shared_hobbies.user_id
         return User.query.get(most_common_user_id)
+
+    @classmethod
+    def get_most_common_user_never_met(cls, user_id: int) -> User:
+        """
+        Search for the user with the most common hobbies with the given user who they have never met.
+        """
+        user_hobbies = UserHobby.query.filter_by(user_id=user_id).all()
+        user_hobby_ids = [user_hobby.hobby_id for user_hobby in user_hobbies]
+
+        # Find users who share the same hobbies, make sure they have never met
+        shared_hobbies = (
+            db.session.query(UserHobby.user_id, db.func.count(UserHobby.hobby_id).label("shared_count"))
+            .filter(UserHobby.hobby_id.in_(user_hobby_ids))
+            .filter(UserHobby.user_id != user_id)
+            .filter(
+                ~UserHobby.user_id.in_(
+                    db.session.query(OneOnOne.user_id1)
+                    .filter(OneOnOne.user_id2 == user_id)
+                    .union(db.session.query(OneOnOne.user_id2).filter(OneOnOne.user_id1 == user_id))
+                )
+            )
+            .group_by(UserHobby.user_id)
+            .order_by(db.func.count(UserHobby.hobby_id).desc())
+            .first()
+        )
+
+        if not shared_hobbies:
+            raise UserException("No other users share hobbies with the given user.")
+
+        # Get the user with the most shared hobbies
+        most_common_user_id = shared_hobbies.user_id
+        return User.query.get(most_common_user_id)
+
+    @classmethod
+    def get_user_one_on_ones(cls, user_id: int) -> list[OneOnOne]:
+        """Given a user, return a list of one on one meetings."""
+        return OneOnOne.query.filter(
+            (OneOnOne.user_id1 == user_id) | (OneOnOne.user_id2 == user_id)
+        ).all()
+
+    @classmethod
+    def get_upcoming_one_on_ones(cls, user_id: int) -> list[OneOnOne]:
+        """Given a user, return a list of upcoming one on one meetings."""
+        return (
+            OneOnOne.query.filter((OneOnOne.user_id1 == user_id) | (OneOnOne.user_id2 == user_id))
+            .filter(OneOnOne.date > datetime.now())
+            .order_by(OneOnOne.date.asc())
+            .all()
+        )
+
+    @classmethod
+    def get_past_one_on_ones(cls, user_id: int) -> list[OneOnOne]:
+        """Given a user, return a list of past one on one meetings."""
+        return (
+            OneOnOne.query.filter((OneOnOne.user_id1 == user_id) | (OneOnOne.user_id2 == user_id))
+            .filter(OneOnOne.date < datetime.now())
+            .order_by(OneOnOne.date.desc())
+            .all()
+        )
+
+    @classmethod
+    def add_one_on_one(cls, user_id1: int, user_id2: int, date: datetime) -> None:
+        """Given two users and a date, add a new one on one meeting."""
+        new_one_on_one = OneOnOne(user_id1=user_id1, user_id2=user_id2, date=date)
+        db.session.add(new_one_on_one)
+        db.session.commit()
+
+    @classmethod
+    def get_one_on_one(cls, one_on_one_id: int) -> OneOnOne:
+        """Given a one on one meeting ID, return the meeting."""
+        return OneOnOne.query.get(one_on_one_id)
+
+    @classmethod
+    def cancel_one_on_one(cls, one_on_one_id: int) -> None:
+        """Given a one on one meeting ID, cancel the meeting."""
+        one_on_one = OneOnOne.query.get(one_on_one_id)
+        if not one_on_one:
+            raise UserException("One on one meeting does not exist!")
+        db.session.delete(one_on_one)
+        db.session.commit()

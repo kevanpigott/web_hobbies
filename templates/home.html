@@ -28,18 +28,28 @@
         <ul id="hobby-list">
             <!-- where hobbies are inserted -->
         </ul>
-        <form onsubmit="addHobby(event)">
+        <hr class="solid">
+        <form onsubmit="addHobby(event)" class="form-inline">
             <label for="hobby">Add a new hobby:</label>
             <input type="text" id="hobby" name="hobby" required>
             <button type="submit" class="btn btn-primary">Add Hobby</button>
         </form>
-        <br>
+        <hr class="solid">
         <!--<h3>Recommended Hobbies:</h3>-->
         <h3>Most Common User:</h3>
         <div id="most-common-user"></div>
         <br>
+        <h3>Most Common User Never Met:</h3>
+        <div id="most-common-user-never-met"></div>
+        <br>
+        <h3>Your One-on-One Meetings:</h3>
+        <ul id="one-on-one-list">
+            <!-- where one-on-one meetings are inserted -->
+        </ul>
+        <hr class="solid">
+        
         <h3>Popular Hobbies:</h3>
-        <ol id="popular-hobby-list" start="1"></ol>
+        <ul id="popular-hobby-list" start="1"></ul>
         <button id="prev-page" class="btn btn-primary">Previous</button>
         <span id="page-number">1</span>
         <button id="next-page" class="btn btn-primary">Next</button>
