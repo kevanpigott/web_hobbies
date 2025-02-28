@@ -48,25 +48,29 @@
 
     <script>
         document.getElementById('scheduleForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const datetime = document.getElementById('meetingDatetime').value.replace(/:/g, '-').replace('T', '-');
-            console.log(datetime);
-            const userId = {{ user.id }};
-            const url = `/schedule_one_on_one/${userId}/${datetime}`;
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }).then(response => response.json())
-              .then(data => {
-                  if (data.success) {
-                      alert('Meeting scheduled successfully!');
-                  } else {
-                      alert('Failed to schedule meeting: ' + data.message);
-                  }
-              });
+        event.preventDefault();
+        const datetimeLocal = document.getElementById('meetingDatetime').value;
+        const datetime = new Date(datetimeLocal);
+        const utcDatetime = new Date(datetime.getTime() + datetime.getTimezoneOffset() * 60000).toISOString().slice(0, 16).replace('T', '-').replace(/:/g, '-');
+        const userId = {{ user.id }};
+        const url = `/schedule_one_on_one/${userId}/${utcDatetime}`;
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Meeting scheduled successfully!');
+            } else {
+                alert('Failed to schedule meeting: ' + data.message);
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while scheduling the meeting.');
         });
+    });
     </script>
 </body>
 </html>

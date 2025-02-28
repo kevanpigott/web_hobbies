@@ -65,16 +65,18 @@ function fetchOneOnOnes() {
             const oneOnOneList = document.getElementById('one-on-one-list');
             oneOnOneList.innerHTML = '';
             data.one_on_ones.forEach(meeting => {
+                const localDate = new Date(meeting.date).toLocaleString();
                 const li = document.createElement('li');
                 li.className = 'list-group-item d-flex justify-content-between align-items-center';
                 li.innerHTML = `
-                    ${meeting.date} with <a href="/user/${meeting.user.username}">${meeting.user.username}</a>
+                    ${localDate} with <a href="/user/${meeting.user.username}">${meeting.user.username}</a>
                     <button class="btn btn-danger btn-sm" onclick="cancelOneOnOne(${meeting.id})">Cancel</button>
                 `;
                 oneOnOneList.appendChild(li);
             });
         });
 }
+
 
 function cancelOneOnOne(meetingId) {
     fetch(`/cancel_one_on_one/${meetingId}`, {
