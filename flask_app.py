@@ -36,9 +36,13 @@ logging.basicConfig(
 @app.before_request
 def log_request_info():
     ip = request.remote_addr
+    user_agent = request.headers.get("User-Agent")
+    referrer = request.referrer
     user = current_user.username if current_user.is_authenticated else "Anonymous"
+    timestamp = datetime.now().isoformat()
     logging.info(
-        f"Request from {ip} by {user}: {request.method} {request.url} - Data: {request.get_data()}"
+        f"Request from {ip} by {user} at {timestamp}: {request.method} {request.url} - "
+        f"User-Agent: {user_agent} - Referrer: {referrer} - Data: {request.get_data()}"
     )
 
 
@@ -417,6 +421,22 @@ def recount_hobbies():
     """
     DbManager.recount_hobbies()
     return redirect(url_for("home"))
+
+
+# track redirects
+@app.route("/redirect/github")
+def redirect_github():
+    return redirect("https://github.com/kevanpigott/")
+
+
+@app.route("/redirect/github_web_hobbies")
+def redirect_github_web_hobbies():
+    return redirect("https://github.com/kevanpigott/web_hobbies")
+
+
+@app.route("/redirect/linkedin")
+def redirect_linkedin():
+    return redirect("https://www.linkedin.com/in/kevan-pigott/")
 
 
 if __name__ == "__main__":
